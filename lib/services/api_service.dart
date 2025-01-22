@@ -25,4 +25,14 @@ class ApiService {
       throw Exception("Failed to load clubs");
     }
   }
+
+  static Future<Map<String, dynamic>> fetchClubDetails(String clubId) async {
+    final response = await http.get(Uri.parse('$baseUrl/club/details/$clubId'));
+  
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception("Failed to load club details");
+    }
+  }
 }
