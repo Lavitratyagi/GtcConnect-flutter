@@ -2,37 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:gtcconnect/bottom_nav_bar.dart';
 
 class FeedPage extends StatefulWidget {
-  const FeedPage({Key? key}) : super(key: key);
+  const FeedPage({super.key});
 
   @override
   State<FeedPage> createState() => _FeedPageState();
 }
 
 class _FeedPageState extends State<FeedPage> {
-  int _currentIndex = 0;
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-      switch (index) {
-        case 0:
-          // Navigate to Home
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (_) => const FeedPage()));
-          break;
-        case 1:
-          // Navigate to Discover
-          Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (_) => const DiscoverPage()));
-          break;
-        case 2:
-          // Navigate to Clubs
-          Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (_) => const ClubsPage()));
-          break;
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +18,7 @@ class _FeedPageState extends State<FeedPage> {
       ),
       body: ListView(
         padding: const EdgeInsets.all(8.0),
-        children: [
+        children: const [
           PostCard(
             clubName: 'Galgotias Tech Council',
             postDate: '09th Nov, 24',
@@ -59,7 +35,7 @@ class _FeedPageState extends State<FeedPage> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavBar(
+      bottomNavigationBar: const BottomNavBar(
       ),
     );
   }
@@ -72,12 +48,12 @@ class PostCard extends StatelessWidget {
   final String description;
 
   const PostCard({
-    Key? key,
+    super.key,
     required this.clubName,
     required this.postDate,
     required this.postImage,
     required this.description,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +85,7 @@ class PostCard extends StatelessWidget {
 
 // Dummy Pages for Navigation
 class DiscoverPage extends StatelessWidget {
-  const DiscoverPage({Key? key}) : super(key: key);
+  const DiscoverPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +97,7 @@ class DiscoverPage extends StatelessWidget {
 }
 
 class ClubsPage extends StatelessWidget {
-  const ClubsPage({Key? key}) : super(key: key);
+  const ClubsPage({super.key});
 
   @override
   Widget build(BuildContext context) {

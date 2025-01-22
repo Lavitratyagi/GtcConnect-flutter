@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'screens/division_list_page.dart';
 
 class BottomNavBar extends StatefulWidget {
-  const BottomNavBar({Key? key}) : super(key: key);
+  const BottomNavBar({super.key});
 
   @override
   State<BottomNavBar> createState() => _BottomNavBarState();
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
-  int _currentIndex = 2;
+  int _currentIndex = 1;
 
   final List<Widget> _pages = [
-    const Center(child: Text("Home Page")), // Replace with actual home screen
-    const Center(child: Text("Discover Page")), // Replace with actual discover screen
+    const Center(child: Text("Home Page")),
+    const Center(child: Text("Discover Page")), 
     const DivisionListPage(),
   ];
 
@@ -26,24 +26,27 @@ class _BottomNavBarState extends State<BottomNavBar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_currentIndex],
+      body: Center(
+        child: _pages.elementAt(_currentIndex),
+      ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onTap,
-        items: const [
+        items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.explore),
-            label: 'Discover',
+            icon: Icon(Icons.business),
+            label: 'Business',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.groups),
-            label: 'Clubs',
+            icon: Icon(Icons.school),
+            label: 'Division',
           ),
         ],
+        currentIndex: _currentIndex,
+        selectedItemColor: Colors.amber[800],
+        onTap: _onTap,
       ),
     );
   }
