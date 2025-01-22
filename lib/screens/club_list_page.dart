@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart'; // Update with your API service path
+import 'club_details_page.dart'; // Import the new ClubDetailsPage
 
 class ClubListPage extends StatefulWidget {
   final String divisionName;
 
-  const ClubListPage({required this.divisionName, Key? key}) : super(key: key);
+  const ClubListPage({required this.divisionName, super.key});
 
   @override
   State<ClubListPage> createState() => _ClubListPageState();
@@ -43,40 +44,50 @@ class _ClubListPageState extends State<ClubListPage> {
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
               final club = snapshot.data![index];
-              return Container(
-                margin:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ClubDetailsPage(clubId: club['_id']),
                     ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Image.network(
-                      club['club_image'],
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(
-                        club['club_name'],
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                  );
+                },
+                child: Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Image.network(
+                        club['club_image'],
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          club['club_name'],
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },
