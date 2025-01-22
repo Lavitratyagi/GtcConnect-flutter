@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtcconnect/screens/event_page.dart';
 import 'screens/division_list_page.dart';
 
 class BottomNavBar extends StatefulWidget {
@@ -13,7 +14,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   final List<Widget> _pages = [
     const Center(child: Text("Home Page")),
-    const Center(child: Text("Discover Page")), 
+    const EventPage(), 
     const DivisionListPage(),
   ];
 
@@ -37,11 +38,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.business),
-            label: 'Business',
+            label: 'Discover',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.school),
-            label: 'Division',
+            label: 'Clubs',
           ),
         ],
         currentIndex: _currentIndex,
