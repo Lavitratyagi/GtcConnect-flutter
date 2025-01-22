@@ -112,10 +112,10 @@ class _DivisionListPageState extends State<DivisionListPage> {
                         child: Row(
                           children: [
                             Image.asset(
-                                'assets/images/gtc.png', // Replace with your image path
-                                width: 80,
-                                height: 80,
-                              ),
+                              'assets/images/gtc.png', // Replace with your image path
+                              width: 80,
+                              height: 80,
+                            ),
                             const SizedBox(width: 16), // Space between icon and text
                             Expanded(
                               child: Text(
@@ -124,8 +124,8 @@ class _DivisionListPageState extends State<DivisionListPage> {
                                   fontSize: 32,
                                   fontWeight: FontWeight.bold,
                                 ),
-                                textAlign: TextAlign.center, 
-                                maxLines: 2, 
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
