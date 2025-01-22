@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = "http://192.168.1.12:3000"; // Replace with your backend URL
+  static const String baseUrl = "http://192.168.1.10:3000"; // Replace with your backend URL
 
   static Future<List<String>> fetchDivisions() async {
-    final response = await http.get(Uri.parse("$baseUrl/divisions"));
+    final response = await http.get(Uri.parse("$baseUrl/division/getAllDivisions"));
 
     if (response.statusCode == 200) {
       List<dynamic> data = jsonDecode(response.body);
