@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gtcconnect/screens/EventPage.dart';
+import 'package:gtcconnect/screens/event_page.dart';
 import 'screens/division_list_page.dart';
 
 class BottomNavBar extends StatefulWidget {

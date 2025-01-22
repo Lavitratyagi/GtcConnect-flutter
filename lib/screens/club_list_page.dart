@@ -4,7 +4,7 @@ import '../services/api_service.dart'; // Update with your API service path
 class ClubListPage extends StatefulWidget {
   final String divisionName;
 
-  const ClubListPage({required this.divisionName, Key? key}) : super(key: key);
+  const ClubListPage({required this.divisionName, super.key});
 
   @override
   State<ClubListPage> createState() => _ClubListPageState();

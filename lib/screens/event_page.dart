@@ -45,12 +45,12 @@ class EventPage extends StatelessWidget {
                   ),
                 ),
               ),
-              Positioned(
+              const Positioned(
                 top: 16,
                 left: 32,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
                       'INTERESTS!',
                       style: TextStyle(
