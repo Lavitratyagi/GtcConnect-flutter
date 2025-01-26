@@ -30,7 +30,7 @@ class _EventPageState extends State<EventPage> {
       _clubNames[clubId] = clubName;
       return clubName;
     } catch (e) {
-      throw Exception('Failed to fetch club name: $e');
+      return 'Unknown Club';
     }
   }
 
