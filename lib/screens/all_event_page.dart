@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtcconnect/screens/event_detail.dart';
 import 'package:gtcconnect/services/api_service.dart';
 
 class AllEventsPage extends StatefulWidget {
@@ -10,34 +11,32 @@ class AllEventsPage extends StatefulWidget {
 
 class _AllEventsPageState extends State<AllEventsPage> {
   late Future<List<Map<String, dynamic>>> _events;
-  String _selectedFilter = 'Present'; // Default filter is 'Present'
-  final Map<String, String> _clubNames = {}; // Store club names by clubId
+  String _selectedFilter = 'Present'; // Default filter
+  final Map<String, String> _clubNames = {}; // Cache for club names
 
   @override
   void initState() {
     super.initState();
-    _events = ApiService().fetchAllEvents(); // Fetch all events
+    _events = ApiService().fetchAllEvents();
   }
 
-  // Method to filter events
+  // Filter events based on the selected filter
   List<Map<String, dynamic>> _filterEvents(List<Map<String, dynamic>> events) {
     DateTime now = DateTime.now();
     DateTime fiveDaysLater = now.add(const Duration(days: 5));
-    
+
     if (_selectedFilter == 'Past') {
-      // Filter past events
       return events.where((event) {
         DateTime eventDate = DateTime.parse(event['eventDate']);
         return eventDate.isBefore(now);
       }).toList();
     } else if (_selectedFilter == 'Present') {
-      // Filter events within the next 5 days, including today
       return events.where((event) {
         DateTime eventDate = DateTime.parse(event['eventDate']);
-        return eventDate.isAfter(now.subtract(const Duration(days: 1))) && eventDate.isBefore(fiveDaysLater);
+        return eventDate.isAfter(now.subtract(const Duration(days: 1))) &&
+            eventDate.isBefore(fiveDaysLater);
       }).toList();
     } else {
-      // Filter upcoming events (after 5 days)
       return events.where((event) {
         DateTime eventDate = DateTime.parse(event['eventDate']);
         return eventDate.isAfter(fiveDaysLater);
@@ -45,18 +44,17 @@ class _AllEventsPageState extends State<AllEventsPage> {
     }
   }
 
-  // Fetch club name using clubId
+  // Fetch club name and cache it
   Future<String> fetchClubName(String clubId) async {
     if (_clubNames.containsKey(clubId)) {
       return _clubNames[clubId]!;
     }
-
     try {
-      final clubName = await ApiService().fetchClubName(clubId); // Fetch club name
+      final clubName = await ApiService().fetchClubName(clubId);
       _clubNames[clubId] = clubName;
       return clubName;
     } catch (e) {
-      throw Exception('Failed to fetch club name: $e');
+      return 'Unknown Club';
     }
   }
 
@@ -68,7 +66,6 @@ class _AllEventsPageState extends State<AllEventsPage> {
           'All Events',
           style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
         ),
-        centerTitle: false,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -80,53 +77,23 @@ class _AllEventsPageState extends State<AllEventsPage> {
             padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
+              children: ['Past', 'Present', 'Upcoming'].map((filter) {
+                return GestureDetector(
                   onTap: () {
                     setState(() {
-                      _selectedFilter = 'Past';
+                      _selectedFilter = filter;
                     });
                   },
                   child: Text(
-                    'Past',
+                    filter,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: _selectedFilter == 'Past' ? Colors.red : Colors.black,
+                      color: _selectedFilter == filter ? Colors.red : Colors.black,
                     ),
                   ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedFilter = 'Present';
-                    });
-                  },
-                  child: Text(
-                    'Present',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: _selectedFilter == 'Present' ? Colors.red : Colors.black,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedFilter = 'Upcoming';
-                    });
-                  },
-                  child: Text(
-                    'Upcoming',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: _selectedFilter == 'Upcoming' ? Colors.red : Colors.black,
-                    ),
-                  ),
-                ),
-              ],
+                );
+              }).toList(),
             ),
           ),
 
@@ -143,6 +110,9 @@ class _AllEventsPageState extends State<AllEventsPage> {
                   return const Center(child: Text('No events available'));
                 } else {
                   final events = _filterEvents(snapshot.data!);
+                  if (events.isEmpty) {
+                    return const Center(child: Text('No events match the filter'));
+                  }
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     itemCount: events.length,
@@ -155,25 +125,17 @@ class _AllEventsPageState extends State<AllEventsPage> {
                         builder: (context, clubSnapshot) {
                           if (clubSnapshot.connectionState == ConnectionState.waiting) {
                             return const Center(child: CircularProgressIndicator());
-                          } else if (clubSnapshot.hasError) {
-                            return Center(child: Text('Error fetching club name: ${clubSnapshot.error}'));
-                          } else if (clubSnapshot.hasData) {
-                            return EventTile(
-                              eventLogo: event['eventPoster'] ?? 'assets/images/gtc.png',
-                              eventName: event['eventName'],
-                              clubName: clubSnapshot.data!,
-                              eventDate: event['eventDate'].split('T')[0],
-                              isOnline: event['eventType'] == 'Online',
-                            );
-                          } else {
-                            return EventTile(
-                              eventLogo: event['eventPoster'] ?? 'assets/images/gtc.png',
-                              eventName: event['eventName'],
-                              clubName: 'Unknown Club',
-                              eventDate: event['eventDate'].split('T')[0],
-                              isOnline: event['eventType'] == 'Online',
-                            );
                           }
+                          final clubName =
+                              clubSnapshot.data ?? 'Unknown Club'; // Fallback club name
+                          return EventTile(
+                            eventLogo: event['eventPoster'] ?? 'assets/images/gtc.png',
+                            eventName: event['eventName'],
+                            clubName: clubName,
+                            eventDate: event['eventDate'].split('T')[0],
+                            isOnline: event['eventType'] == 'Online',
+                            eventId: event['_id'],
+                          );
                         },
                       );
                     },
@@ -194,6 +156,7 @@ class EventTile extends StatelessWidget {
   final String clubName;
   final String eventDate;
   final bool isOnline;
+  final String eventId;
 
   const EventTile({
     required this.eventLogo,
@@ -201,12 +164,22 @@ class EventTile extends StatelessWidget {
     required this.clubName,
     required this.eventDate,
     required this.isOnline,
+    required this.eventId,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+return GestureDetector(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EventDetailPage(eventId: eventId), // Pass the event ID or necessary data
+      ),
+    );
+  },
+  child: Card(
       margin: const EdgeInsets.only(bottom: 16.0),
       elevation: 4,
       shape: RoundedRectangleBorder(
@@ -216,7 +189,7 @@ class EventTile extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: Row(
           children: [
-            // Event Logo with error handling for invalid URL
+            // Event Logo
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
@@ -225,9 +198,8 @@ class EventTile extends StatelessWidget {
                 height: 80,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  // Fallback to local image if network image fails
                   return Image.asset(
-                    'assets/images/gtc.png', // Default image
+                    'assets/images/gtc.png',
                     width: 80,
                     height: 80,
                     fit: BoxFit.cover,
@@ -282,6 +254,7 @@ class EventTile extends StatelessWidget {
           ],
         ),
       ),
-    );
+    )
+);
   }
 }

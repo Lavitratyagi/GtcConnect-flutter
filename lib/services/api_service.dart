@@ -81,7 +81,8 @@ class ApiService {
 
   Future<String> fetchClubName(String clubId) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/club/details/$clubId'));
+      final response =
+          await http.get(Uri.parse('$baseUrl/club/details/$clubId'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return data['club_name']; // Extract club name from the response
@@ -90,6 +91,21 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error fetching club details: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> fetchEventDetails(String eventId) async {
+    try {
+      final response =
+          await http.get(Uri.parse("$baseUrl/events/get/$eventId"));
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception("Failed to load event details: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Error fetching event details: $e");
     }
   }
 }
