@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   static const String baseUrl =
-      "http://192.168.1.10:3000"; // Replace with your backend URL
+      "http://192.168.1.4:3000"; // Replace with your backend URL
 
   static Future<List<String>> fetchDivisions() async {
     final response =
@@ -81,7 +81,8 @@ class ApiService {
 
   Future<String> fetchClubName(String clubId) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/club/details/$clubId'));
+      final response =
+          await http.get(Uri.parse('$baseUrl/club/details/$clubId'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return data['club_name']; // Extract club name from the response
@@ -90,6 +91,44 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error fetching club details: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> fetchEventDetails(String eventId) async {
+    final Uri url = Uri.parse('$baseUrl/events/get/$eventId');
+    print(url);
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Failed to load event details: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching event details: $e');
+    }
+  }
+
+  static Future<String> loginUser(
+      String usernameOrEmail, String password) async {
+    final url = Uri.parse('$baseUrl/users/login');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'usernameOrEmail': usernameOrEmail,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      // Assume the backend returns a JSON with a token property.
+      return data['token'];
+    } else {
+      throw Exception('Login failed: ${response.body}');
     }
   }
 }

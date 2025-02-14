@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtcconnect/screens/event_detail.dart';
 import 'package:gtcconnect/services/api_service.dart';
 
 class AllEventsPage extends StatefulWidget {
@@ -11,7 +12,7 @@ class AllEventsPage extends StatefulWidget {
 class _AllEventsPageState extends State<AllEventsPage> {
   late Future<List<Map<String, dynamic>>> _events;
   String _selectedFilter = 'Present'; // Default filter is 'Present'
-  final Map<String, String> _clubNames = {}; // Store club names by clubId
+  final Map<String, String> _clubNames = {}; // Cache for club names
 
   @override
   void initState() {
@@ -34,7 +35,8 @@ class _AllEventsPageState extends State<AllEventsPage> {
       // Filter events within the next 5 days, including today
       return events.where((event) {
         DateTime eventDate = DateTime.parse(event['eventDate']);
-        return eventDate.isAfter(now.subtract(const Duration(days: 1))) && eventDate.isBefore(fiveDaysLater);
+        return eventDate.isAfter(now.subtract(const Duration(days: 1))) && 
+               eventDate.isBefore(fiveDaysLater);
       }).toList();
     } else {
       // Filter upcoming events (after 5 days)
@@ -45,18 +47,17 @@ class _AllEventsPageState extends State<AllEventsPage> {
     }
   }
 
-  // Fetch club name using clubId
+  // Fetch club name using clubId and cache it
   Future<String> fetchClubName(String clubId) async {
     if (_clubNames.containsKey(clubId)) {
       return _clubNames[clubId]!;
     }
-
     try {
-      final clubName = await ApiService().fetchClubName(clubId); // Fetch club name
+      final clubName = await ApiService().fetchClubName(clubId);
       _clubNames[clubId] = clubName;
       return clubName;
     } catch (e) {
-      throw Exception('Failed to fetch club name: $e');
+      return 'Unknown Club';
     }
   }
 
@@ -68,11 +69,11 @@ class _AllEventsPageState extends State<AllEventsPage> {
           'All Events',
           style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
         ),
-        centerTitle: false,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
       ),
+      backgroundColor: Colors.grey[50],
       body: Column(
         children: [
           // Filter options
@@ -80,53 +81,23 @@ class _AllEventsPageState extends State<AllEventsPage> {
             padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
+              children: ['Past', 'Present', 'Upcoming'].map((filter) {
+                return GestureDetector(
                   onTap: () {
                     setState(() {
-                      _selectedFilter = 'Past';
+                      _selectedFilter = filter;
                     });
                   },
                   child: Text(
-                    'Past',
+                    filter,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: _selectedFilter == 'Past' ? Colors.red : Colors.black,
+                      color: _selectedFilter == filter ? Colors.red : Colors.black,
                     ),
                   ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedFilter = 'Present';
-                    });
-                  },
-                  child: Text(
-                    'Present',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: _selectedFilter == 'Present' ? Colors.red : Colors.black,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedFilter = 'Upcoming';
-                    });
-                  },
-                  child: Text(
-                    'Upcoming',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: _selectedFilter == 'Upcoming' ? Colors.red : Colors.black,
-                    ),
-                  ),
-                ),
-              ],
+                );
+              }).toList(),
             ),
           ),
 
@@ -149,31 +120,21 @@ class _AllEventsPageState extends State<AllEventsPage> {
                     itemBuilder: (context, index) {
                       final event = events[index];
                       final clubId = event['clubId'];
-
                       return FutureBuilder<String>(
                         future: fetchClubName(clubId),
                         builder: (context, clubSnapshot) {
                           if (clubSnapshot.connectionState == ConnectionState.waiting) {
                             return const Center(child: CircularProgressIndicator());
-                          } else if (clubSnapshot.hasError) {
-                            return Center(child: Text('Error fetching club name: ${clubSnapshot.error}'));
-                          } else if (clubSnapshot.hasData) {
-                            return EventTile(
-                              eventLogo: event['eventPoster'] ?? 'assets/images/gtc.png',
-                              eventName: event['eventName'],
-                              clubName: clubSnapshot.data!,
-                              eventDate: event['eventDate'].split('T')[0],
-                              isOnline: event['eventType'] == 'Online',
-                            );
-                          } else {
-                            return EventTile(
-                              eventLogo: event['eventPoster'] ?? 'assets/images/gtc.png',
-                              eventName: event['eventName'],
-                              clubName: 'Unknown Club',
-                              eventDate: event['eventDate'].split('T')[0],
-                              isOnline: event['eventType'] == 'Online',
-                            );
                           }
+                          final clubName = clubSnapshot.data ?? 'Unknown Club';
+                          return EventTile(
+                            eventLogo: event['eventPoster'],
+                            eventName: event['eventName'] ?? '',
+                            clubName: clubName,
+                            eventDate: (event['eventDate'] ?? '').split('T')[0],
+                            isOnline: (event['eventType'] ?? '').toString() == 'Online',
+                            eventId: event['_id'],
+                          );
                         },
                       );
                     },
@@ -194,6 +155,7 @@ class EventTile extends StatelessWidget {
   final String clubName;
   final String eventDate;
   final bool isOnline;
+  final String eventId;
 
   const EventTile({
     required this.eventLogo,
@@ -201,85 +163,110 @@ class EventTile extends StatelessWidget {
     required this.clubName,
     required this.eventDate,
     required this.isOnline,
+    required this.eventId,
     super.key,
   });
 
+  // Helper method to choose the appropriate image widget.
+  // If the eventLogo starts with "http", use Image.network; otherwise, use Image.asset.
+  Widget buildEventLogo() {
+    if (eventLogo.startsWith('http')) {
+      return Image.network(
+        eventLogo,
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          // Fallback to asset image if network image fails.
+          return Image.asset(
+            'assets/images/gtc.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+          );
+        },
+      );
+    } else {
+      return Image.asset(
+        eventLogo.isNotEmpty ? eventLogo : 'assets/images/gtc.png',
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          children: [
-            // Event Logo with error handling for invalid URL
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                eventLogo,
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  // Fallback to local image if network image fails
-                  return Image.asset(
-                    'assets/images/gtc.png', // Default image
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-
-            // Event Details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    eventName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    clubName,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    eventDate,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-
-            // Online/Offline Tag
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-              decoration: BoxDecoration(
-                color: isOnline ? Colors.green : Colors.red,
+    return GestureDetector(
+      onTap: () {
+        // Navigate to EventDetailPage with the eventId
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EventDetailPage(eventId: eventId),
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16.0),
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              // Event Logo
+              ClipRRect(
                 borderRadius: BorderRadius.circular(8),
+                child: buildEventLogo(),
               ),
-              child: Text(
-                isOnline ? 'ONLINE' : 'OFFLINE',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(width: 16),
+              // Event Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      eventName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      clubName,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      eventDate,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+              // Online/Offline Tag
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                decoration: BoxDecoration(
+                  color: isOnline ? Colors.green : Colors.red,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  isOnline ? 'ONLINE' : 'OFFLINE',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
