@@ -22,6 +22,9 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Club Details"),
+      ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _clubDetails,
         builder: (context, snapshot) {
@@ -34,6 +37,8 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
           }
 
           final club = snapshot.data!;
+          // Get the club heads array; expect each head to have fullName and avatar.
+          final List<dynamic> clubHeads = club['clubHeads'] ?? [];
 
           return SingleChildScrollView(
             child: Column(
@@ -49,31 +54,26 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
                       height: 200,
                       fit: BoxFit.cover,
                     ),
-                    // Logo (Circle Avatar)
+                    // Positioned Logo (Circle Avatar) over the banner
                     Positioned(
                       bottom: -40,
                       left: MediaQuery.of(context).size.width / 2 - 50,
                       child: CircleAvatar(
                         radius: 50,
-                        backgroundImage: NetworkImage(club['club_image'] ?? ''),
+                        backgroundImage: club['clubLogo'] != null && club['clubLogo'].toString().isNotEmpty
+                          ? NetworkImage(club['clubLogo'])
+                          : const AssetImage('assets/images/default_logo.png') as ImageProvider,
                         backgroundColor: Colors.white,
-                        onBackgroundImageError: (_, __) {
-                          setState(() {});
-                        },
-                        child: club['club_image'] == null
-                            ? Image.asset('assets/images/default_logo.png')
-                            : null,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 60), // Space for the logo
-
+                const SizedBox(height: 60), // Space for the positioned logo
                 // Club Name
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
-                    club['club_name'] ?? "Club Name",
+                    club['name'] ?? "Club Name",
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -82,8 +82,7 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // About Section (Centered)
+                // About Section Title
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.0),
                   child: Align(
@@ -99,27 +98,27 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-
-                // Club Heads (Square Images with Card Background and Margins)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildHeadCard(club['head1_name'] ?? '', club['head1_image']),
-                      const SizedBox(width: 16), // Space between the cards
-                      _buildHeadCard(club['head2_name'] ?? '', club['head2_image']),
-                    ],
+                // Club Heads Section (display up to 2 heads if available)
+                if (clubHeads.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: clubHeads.take(2).map((head) {
+                        return _buildHeadCard(
+                          head['fullName'] ?? '',
+                          head['avatar'] ?? '',
+                        );
+                      }).toList(),
+                    ),
                   ),
-                ),
                 const SizedBox(height: 16),
-
                 // Club Description
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
-                    club['club_desc']?.isNotEmpty == true
-                        ? club['club_desc']
+                    club['description']?.toString().isNotEmpty == true
+                        ? club['description']
                         : "No description available.",
                     style: const TextStyle(fontSize: 16),
                     textAlign: TextAlign.justify,
@@ -146,27 +145,32 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  imageUrl ?? '',
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Image.asset(
-                      'assets/images/default_head.png',
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                    );
-                  },
-                ),
+                child: imageUrl != null && imageUrl.isNotEmpty
+                    ? Image.network(
+                        imageUrl,
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Image.asset(
+                            'assets/images/default_head.png',
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      )
+                    : Image.asset(
+                        'assets/images/default_head.png',
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      ),
               ),
               const SizedBox(height: 8),
               Text(
                 name.isNotEmpty ? name : "N/A",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),

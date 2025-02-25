@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart'; // Update with your API service path
-import 'club_details_page.dart'; // Import the new ClubDetailsPage
+import '../services/api_service.dart';
+import 'club_details_page.dart';
 
 class ClubListPage extends StatefulWidget {
   final String divisionName;
@@ -17,7 +17,7 @@ class _ClubListPageState extends State<ClubListPage> {
   @override
   void initState() {
     super.initState();
-    _clubs = ApiService.fetchClubsByDivision(widget.divisionName); // Fetch clubs
+    _clubs = ApiService.fetchClubsByDivision(widget.divisionName);
   }
 
   @override
@@ -25,9 +25,11 @@ class _ClubListPageState extends State<ClubListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Clubs in ${widget.divisionName}",
+          "${widget.divisionName}",
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _clubs,
@@ -41,6 +43,7 @@ class _ClubListPageState extends State<ClubListPage> {
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
               final club = snapshot.data![index];
@@ -49,13 +52,13 @@ class _ClubListPageState extends State<ClubListPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ClubDetailsPage(clubId: club['_id']),
+                      builder: (context) =>
+                          ClubDetailsPage(clubId: club['_id']),
                     ),
                   );
                 },
                 child: Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -71,15 +74,23 @@ class _ClubListPageState extends State<ClubListPage> {
                   child: Row(
                     children: [
                       Image.network(
-                        club['club_image'],
+                        club['clubLogo'] ?? '',
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Image.asset(
+                            'assets/images/gtc.png',
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                          );
+                        },
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Text(
-                          club['club_name'],
+                          club['name'] ?? 'Unnamed Club',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
