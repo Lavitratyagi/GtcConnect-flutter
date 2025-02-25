@@ -5,13 +5,12 @@ class ApiService {
   static const String baseUrl =
       "http://192.168.1.4:3000"; // Replace with your backend URL
 
-  static Future<List<String>> fetchDivisions() async {
+  static Future<List<Map<String, dynamic>>> fetchDivisions() async {
     final response =
         await http.get(Uri.parse("$baseUrl/division/getAllDivisions"));
-
     if (response.statusCode == 200) {
-      List<dynamic> data = jsonDecode(response.body);
-      return List<String>.from(data);
+      final data = jsonDecode(response.body);
+      return List<Map<String, dynamic>>.from(data);
     } else {
       throw Exception("Failed to load divisions");
     }
@@ -129,6 +128,17 @@ class ApiService {
       return data['token'];
     } else {
       throw Exception('Login failed: ${response.body}');
+    }
+  }
+
+  static Future<Map<String, dynamic>> fetchDivisionCoreDetails(
+      String divisionId) async {
+    final response = await http
+        .get(Uri.parse('$baseUrl/division/getCoreDetails/$divisionId'));
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception("Failed to load division core details");
     }
   }
 }

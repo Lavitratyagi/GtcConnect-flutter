@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'club_details_page.dart';
+import 'division_core_details_page.dart';
 
 class ClubListPage extends StatefulWidget {
   final String divisionName;
+  final String divisionId; // Pass division ObjectId
 
-  const ClubListPage({required this.divisionName, super.key});
+  const ClubListPage({
+    required this.divisionName,
+    required this.divisionId,
+    super.key,
+  });
 
   @override
   State<ClubListPage> createState() => _ClubListPageState();
@@ -25,11 +31,27 @@ class _ClubListPageState extends State<ClubListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "${widget.divisionName}",
+          widget.divisionName,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
+        actions: [
+          // Icon button that navigates to DivisionCoreDetailsPage.
+          IconButton(
+            icon: const Icon(Icons.group),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DivisionCoreDetailsPage(
+                    divisionId: widget.divisionId,
+                  ),
+                ),
+              );
+            },
+          )
+        ],
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _clubs,
@@ -52,8 +74,7 @@ class _ClubListPageState extends State<ClubListPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          ClubDetailsPage(clubId: club['_id']),
+                      builder: (context) => ClubDetailsPage(clubId: club['_id']),
                     ),
                   );
                 },

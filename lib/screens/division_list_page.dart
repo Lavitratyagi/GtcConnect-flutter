@@ -10,17 +10,19 @@ class DivisionListPage extends StatefulWidget {
 }
 
 class _DivisionListPageState extends State<DivisionListPage> {
-  late Future<List<String>> _divisions;
-  List<String> _filteredDivisions = [];
+  late Future<List<Map<String, dynamic>>> _divisions;
+  List<Map<String, dynamic>> _allDivisions = [];
+  List<Map<String, dynamic>> _filteredDivisions = [];
   String _searchQuery = "";
 
   @override
   void initState() {
     super.initState();
-    _divisions = ApiService.fetchDivisions(); // Fetch divisions from backend
+    _divisions = ApiService.fetchDivisions();
     _divisions.then((divisions) {
       setState(() {
-        _filteredDivisions = divisions; // Initialize with all divisions
+        _allDivisions = divisions;
+        _filteredDivisions = List.from(divisions);
       });
     });
   }
@@ -28,12 +30,16 @@ class _DivisionListPageState extends State<DivisionListPage> {
   void _filterDivisions(String query) {
     setState(() {
       _searchQuery = query;
-      _filteredDivisions = _searchQuery.isEmpty
-          ? _filteredDivisions
-          : _filteredDivisions
-              .where((division) =>
-                  division.toLowerCase().contains(_searchQuery.toLowerCase()))
-              .toList();
+      if (_searchQuery.isEmpty) {
+        _filteredDivisions = List.from(_allDivisions);
+      } else {
+        _filteredDivisions = _allDivisions
+            .where((division) => division['name']
+                .toString()
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()))
+            .toList();
+      }
     });
   }
 
@@ -44,12 +50,12 @@ class _DivisionListPageState extends State<DivisionListPage> {
         title: const Text(
           "Find your Division",
           style: TextStyle(
-            fontFamily: "Abhaya Libre ExtraBold", // Custom font
+            fontFamily: "Abhaya Libre ExtraBold",
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
-        centerTitle: false, // Align text to the left
+        centerTitle: false,
       ),
       body: Column(
         children: [
@@ -69,7 +75,7 @@ class _DivisionListPageState extends State<DivisionListPage> {
           ),
           // Division List
           Expanded(
-            child: FutureBuilder<List<String>>(
+            child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _divisions,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -83,43 +89,45 @@ class _DivisionListPageState extends State<DivisionListPage> {
                 return ListView.builder(
                   itemCount: _filteredDivisions.length,
                   itemBuilder: (context, index) {
+                    final division = _filteredDivisions[index];
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => ClubListPage(
-                              divisionName: _filteredDivisions[index],
+                              divisionName: division['name'],
+                              divisionId: division['_id'],
                             ),
                           ),
                         );
                       },
                       child: Container(
                         margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8), // Margin around the tile
-                        padding: const EdgeInsets.all(16), // Padding inside the tile
+                            horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFA3B9CC), // Background color
-                          borderRadius: BorderRadius.circular(12), // Rounded corners
+                          color: const Color(0xFFA3B9CC),
+                          borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.2), // Shadow color
-                              blurRadius: 6, // Blur radius
-                              offset: const Offset(0, 3), // Shadow position
+                              color: Colors.grey.withOpacity(0.2),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
                         child: Row(
                           children: [
                             Image.asset(
-                              'assets/images/gtc.png', // Replace with your image path
+                              'assets/images/gtc.png',
                               width: 80,
                               height: 80,
                             ),
-                            const SizedBox(width: 16), // Space between icon and text
+                            const SizedBox(width: 16),
                             Expanded(
                               child: Text(
-                                _filteredDivisions[index],
+                                division['name'],
                                 style: const TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.bold,
