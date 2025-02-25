@@ -24,6 +24,8 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Club Details"),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _clubDetails,
@@ -37,7 +39,7 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
           }
 
           final club = snapshot.data!;
-          // Get the club heads array; expect each head to have fullName and avatar.
+          // Get the club heads array (each head has fullName and avatar).
           final List<dynamic> clubHeads = club['clubHeads'] ?? [];
 
           return SingleChildScrollView(
@@ -47,7 +49,7 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    // Banner Image
+                    // Banner Image (a static asset)
                     Image.asset(
                       'assets/images/gtccore.png',
                       width: double.infinity,
@@ -60,9 +62,11 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
                       left: MediaQuery.of(context).size.width / 2 - 50,
                       child: CircleAvatar(
                         radius: 50,
-                        backgroundImage: club['clubLogo'] != null && club['clubLogo'].toString().isNotEmpty
-                          ? NetworkImage(club['clubLogo'])
-                          : const AssetImage('assets/images/default_logo.png') as ImageProvider,
+                        backgroundImage: club['clubLogo'] != null &&
+                                club['clubLogo'].toString().isNotEmpty
+                            ? NetworkImage(club['clubLogo'])
+                            : const AssetImage('assets/images/default_logo.png')
+                                as ImageProvider,
                         backgroundColor: Colors.white,
                       ),
                     ),
@@ -82,7 +86,7 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // About Section Title
+                // ABOUT Section Title
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.0),
                   child: Align(
@@ -98,7 +102,7 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Club Heads Section (display up to 2 heads if available)
+                // Club Heads Section (display up to 2 heads, if available)
                 if (clubHeads.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -135,21 +139,24 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
   Widget _buildHeadCard(String name, String? imageUrl) {
     return Expanded(
       child: Card(
-        elevation: 4,
+        elevation: 8,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Padding(
+        child: Container(
+          height: 180, // Increased height for the card
           padding: const EdgeInsets.all(8.0),
           child: Column(
+            mainAxisAlignment:
+                MainAxisAlignment.center, // Center the content vertically
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: imageUrl != null && imageUrl.isNotEmpty
                     ? Image.network(
                         imageUrl,
-                        width: 80,
-                        height: 80,
+                        width: 100,
+                        height: 100,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Image.asset(
@@ -177,6 +184,7 @@ class _ClubDetailsPageState extends State<ClubDetailsPage> {
               const Text(
                 "CLUB HEAD",
                 style: TextStyle(fontSize: 12, color: Colors.grey),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
