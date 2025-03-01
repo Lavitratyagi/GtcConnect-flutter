@@ -11,27 +11,11 @@ class EventPage extends StatefulWidget {
 
 class _EventPageState extends State<EventPage> {
   late Future<List<Map<String, dynamic>>> _hotEvents;
-  final Map<String, String> _clubNames = {}; // Store club names by clubId
 
   @override
   void initState() {
     super.initState();
-    _hotEvents = ApiService().fetchAllEvents(); // Fetch hot events
-  }
-
-  // Fetch club name using clubId
-  Future<String> fetchClubName(String clubId) async {
-    if (_clubNames.containsKey(clubId)) {
-      return _clubNames[clubId]!;
-    }
-
-    try {
-      final clubName = await ApiService().fetchClubName(clubId); // Fetch club name
-      _clubNames[clubId] = clubName;
-      return clubName;
-    } catch (e) {
-      throw Exception('Failed to fetch club name: $e');
-    }
+    _hotEvents = ApiService().fetchAllEvents(); // Fetch events
   }
 
   @override
@@ -40,10 +24,7 @@ class _EventPageState extends State<EventPage> {
       appBar: AppBar(
         title: const Text(
           'Events',
-          style: TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
         ),
         centerTitle: false,
         backgroundColor: Colors.white,
@@ -72,7 +53,7 @@ class _EventPageState extends State<EventPage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   image: const DecorationImage(
-                    image: AssetImage('assets/images/gtc_background.png'), // Correct path
+                    image: AssetImage('assets/images/gtc_background.png'),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -86,27 +67,24 @@ class _EventPageState extends State<EventPage> {
                     Text(
                       'INTERESTS!',
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                     SizedBox(height: 8),
                     Text(
                       'Your Registered',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                     Text(
                       'EVENTS!',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                   ],
                 ),
@@ -116,7 +94,7 @@ class _EventPageState extends State<EventPage> {
                 left: 32,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Navigate to Registered Events
+                    // Navigate to Registered Events (if needed)
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
@@ -143,25 +121,20 @@ class _EventPageState extends State<EventPage> {
               children: [
                 const Text(
                   'Hot Events',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const AllEventsPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const AllEventsPage()),
                     );
                   },
                   child: const Text(
                     'View All',
                     style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        fontSize: 24, color: Colors.red, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -177,59 +150,51 @@ class _EventPageState extends State<EventPage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Center(
-                    child: Text('Error: ${snapshot.error}'),
-                  );
+                  return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (snapshot.hasData && snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text('No upcoming hot events'),
-                  );
-                } else {
-                  final events = snapshot.data!;
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    itemCount: events.length,
-                    itemBuilder: (context, index) {
-                      final event = events[index];
-                      final clubId = event['clubId'];
-
-                      return FutureBuilder<String>(
-                        future: fetchClubName(clubId),
-                        builder: (context, clubSnapshot) {
-                          if (clubSnapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
-                          } else if (clubSnapshot.hasError) {
-                            return Center(child: Text('Error fetching club name: ${clubSnapshot.error}'));
-                          } else if (clubSnapshot.hasData) {
-                            return EventTile(
-                              eventLogo:
-                                  event['eventPoster'] ?? 'assets/images/gtc.png',
-                              eventName: event['eventName'],
-                              clubName: clubSnapshot.data!,
-                              eventDate: event['eventDate'].split('T')[0],
-                              isOnline: event['eventType'] == 'Online',
-                            );
-                          } else {
-                            return EventTile(
-                              eventLogo:
-                                  event['eventPoster'] ?? 'assets/images/gtc.png',
-                              eventName: event['eventName'],
-                              clubName: 'Unknown Club',
-                              eventDate: event['eventDate'].split('T')[0],
-                              isOnline: event['eventType'] == 'Online',
-                            );
-                          }
-                        },
-                      );
-                    },
-                  );
+                  return const Center(child: Text('No upcoming events'));
                 }
+
+                final events = snapshot.data!;
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  itemCount: events.length,
+                  itemBuilder: (context, index) {
+                    final event = events[index];
+
+                    return EventTile(
+                      eventLogo: event['eventPoster'] ?? 'assets/images/gtc.png',
+                      eventName: event['eventName'] ?? 'Unknown Event',
+                      clubName: (event['club'] != null && event['club']['name'] != null)
+                          ? event['club']['name']
+                          : 'Unknown Club',
+                      eventDate: event['eventDate'] != null
+                          ? _formatDate(event['eventDate'])
+                          : "Unknown Date",
+                      isOnline: event['eventType'] == 'Online',
+                    );
+                  },
+                );
               },
             ),
           ),
         ],
       ),
     );
+  }
+
+  // Helper function to format date
+  String _formatDate(dynamic eventDate) {
+    try {
+      if (eventDate is String) {
+        return DateTime.parse(eventDate).toLocal().toString().split(' ')[0];
+      } else if (eventDate is DateTime) {
+        return eventDate.toLocal().toString().split(' ')[0];
+      }
+    } catch (e) {
+      return "Unknown Date"; // Fallback in case of errors
+    }
+    return "Unknown Date";
   }
 }
 
@@ -254,9 +219,7 @@ class EventTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Row(
@@ -270,7 +233,6 @@ class EventTile extends StatelessWidget {
                 height: 80,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  // Fallback to local image if network image fails
                   return Image.asset(
                     'assets/images/gtc.png', // Default image
                     width: 80,
@@ -289,10 +251,7 @@ class EventTile extends StatelessWidget {
                 children: [
                   Text(
                     eventName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -317,11 +276,7 @@ class EventTile extends StatelessWidget {
               ),
               child: Text(
                 isOnline ? 'ONLINE' : 'OFFLINE',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
               ),
             ),
           ],

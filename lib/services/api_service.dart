@@ -67,10 +67,14 @@ class ApiService {
       final response = await http.get(Uri.parse('$baseUrl/events/getall'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final events = data['events'] as List;
+        final events = List<Map<String, dynamic>>.from(data['events']);
 
-        // No filtering applied, return all events
-        return List<Map<String, dynamic>>.from(events);
+        for (var event in events) {
+          // Convert eventDate from string to DateTime
+          event['eventDate'] = DateTime.parse(event['eventDate']).toLocal();
+        }
+
+        return events;
       } else {
         throw Exception('Failed to fetch events: ${response.body}');
       }
@@ -143,21 +147,22 @@ class ApiService {
     }
   }
 
-  static Future<String> createEvent(Map<String, dynamic> eventData, {File? posterImage}) async {
+  static Future<String> createEvent(Map<String, dynamic> eventData,
+      {File? posterImage}) async {
     if (posterImage != null) {
       // Use multipart request when an image is selected.
-      var request = http.MultipartRequest("POST", Uri.parse('$baseUrl/events/create'));
-      
+      var request =
+          http.MultipartRequest("POST", Uri.parse('$baseUrl/events/create'));
+
       // Add text fields
       eventData.forEach((key, value) {
         request.fields[key] = value.toString();
       });
-      
+
       // Add the image file.
       request.files.add(
-        await http.MultipartFile.fromPath('posterImage', posterImage.path)
-      );
-      
+          await http.MultipartFile.fromPath('posterImage', posterImage.path));
+
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
       if (response.statusCode == 201) {

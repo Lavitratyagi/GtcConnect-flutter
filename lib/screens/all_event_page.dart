@@ -24,41 +24,26 @@ class _AllEventsPageState extends State<AllEventsPage> {
   List<Map<String, dynamic>> _filterEvents(List<Map<String, dynamic>> events) {
     DateTime now = DateTime.now();
     DateTime fiveDaysLater = now.add(const Duration(days: 5));
-    
-    if (_selectedFilter == 'Past') {
-      // Filter past events
-      return events.where((event) {
-        DateTime eventDate = DateTime.parse(event['eventDate']);
-        return eventDate.isBefore(now);
-      }).toList();
-    } else if (_selectedFilter == 'Present') {
-      // Filter events within the next 5 days, including today
-      return events.where((event) {
-        DateTime eventDate = DateTime.parse(event['eventDate']);
-        return eventDate.isAfter(now.subtract(const Duration(days: 1))) && 
-               eventDate.isBefore(fiveDaysLater);
-      }).toList();
-    } else {
-      // Filter upcoming events (after 5 days)
-      return events.where((event) {
-        DateTime eventDate = DateTime.parse(event['eventDate']);
-        return eventDate.isAfter(fiveDaysLater);
-      }).toList();
-    }
-  }
 
-  // Fetch club name using clubId and cache it
-  Future<String> fetchClubName(String clubId) async {
-    if (_clubNames.containsKey(clubId)) {
-      return _clubNames[clubId]!;
-    }
-    try {
-      final clubName = await ApiService().fetchClubName(clubId);
-      _clubNames[clubId] = clubName;
-      return clubName;
-    } catch (e) {
-      return 'Unknown Club';
-    }
+    return events.where((event) {
+      DateTime eventDate;
+      if (event['eventDate'] is String) {
+        eventDate = DateTime.tryParse(event['eventDate']) ?? now;
+      } else if (event['eventDate'] is DateTime) {
+        eventDate = event['eventDate'];
+      } else {
+        eventDate = now;
+      }
+
+      if (_selectedFilter == 'Past') {
+        return eventDate.isBefore(now);
+      } else if (_selectedFilter == 'Present') {
+        return eventDate.isAfter(now.subtract(const Duration(days: 1))) &&
+            eventDate.isBefore(fiveDaysLater);
+      } else {
+        return eventDate.isAfter(fiveDaysLater);
+      }
+    }).toList();
   }
 
   @override
@@ -112,40 +97,50 @@ class _AllEventsPageState extends State<AllEventsPage> {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (snapshot.hasData && snapshot.data!.isEmpty) {
                   return const Center(child: Text('No events available'));
-                } else {
-                  final events = _filterEvents(snapshot.data!);
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    itemCount: events.length,
-                    itemBuilder: (context, index) {
-                      final event = events[index];
-                      final clubId = event['clubId'];
-                      return FutureBuilder<String>(
-                        future: fetchClubName(clubId),
-                        builder: (context, clubSnapshot) {
-                          if (clubSnapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-                          final clubName = clubSnapshot.data ?? 'Unknown Club';
-                          return EventTile(
-                            eventLogo: event['eventPoster'],
-                            eventName: event['eventName'] ?? '',
-                            clubName: clubName,
-                            eventDate: (event['eventDate'] ?? '').split('T')[0],
-                            isOnline: (event['eventType'] ?? '').toString() == 'Online',
-                            eventId: event['_id'],
-                          );
-                        },
-                      );
-                    },
-                  );
                 }
+
+                final events = _filterEvents(snapshot.data!);
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  itemCount: events.length,
+                  itemBuilder: (context, index) {
+                    final event = events[index];
+                    final eventDate = _formatDate(event['eventDate']);
+                    final eventType = (event['eventType'] ?? '').toString();
+                    final isOnline = eventType == 'Online';
+                    final clubName = (event['club'] != null && event['club']['name'] != null)
+                        ? event['club']['name']
+                        : 'Unknown Club';
+                    return EventTile(
+                      eventLogo: event['eventPoster'] ?? 'assets/images/gtc.png',
+                      eventName: event['eventName'] ?? 'Unknown Event',
+                      clubName: clubName,
+                      eventDate: eventDate,
+                      isOnline: isOnline,
+                      eventId: event['_id'],
+                    );
+                  },
+                );
               },
             ),
           ),
         ],
       ),
     );
+  }
+
+  // Helper function to format date
+  String _formatDate(dynamic eventDate) {
+    try {
+      if (eventDate is String) {
+        return DateTime.parse(eventDate).toLocal().toString().split(' ')[0];
+      } else if (eventDate is DateTime) {
+        return eventDate.toLocal().toString().split(' ')[0];
+      }
+    } catch (e) {
+      return "Unknown Date"; // Fallback in case of errors
+    }
+    return "Unknown Date";
   }
 }
 
@@ -167,8 +162,6 @@ class EventTile extends StatelessWidget {
     super.key,
   });
 
-  // Helper method to choose the appropriate image widget.
-  // If the eventLogo starts with "http", use Image.network; otherwise, use Image.asset.
   Widget buildEventLogo() {
     if (eventLogo.startsWith('http')) {
       return Image.network(
@@ -177,7 +170,6 @@ class EventTile extends StatelessWidget {
         height: 80,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
-          // Fallback to asset image if network image fails.
           return Image.asset(
             'assets/images/gtc.png',
             width: 80,
@@ -218,23 +210,18 @@ class EventTile extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              // Event Logo
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: buildEventLogo(),
               ),
               const SizedBox(width: 16),
-              // Event Details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       eventName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -249,7 +236,6 @@ class EventTile extends StatelessWidget {
                   ],
                 ),
               ),
-              // Online/Offline Tag
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 decoration: BoxDecoration(
