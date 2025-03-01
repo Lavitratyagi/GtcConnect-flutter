@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:gtcconnect/services/api_service.dart';
+import 'package:intl/intl.dart';
+import '../services/api_service.dart';
 
 class EventDetailPage extends StatefulWidget {
   final String eventId;
@@ -16,6 +17,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   final GlobalKey _aboutKey = GlobalKey();
   final GlobalKey _updatesKey = GlobalKey();
   final GlobalKey _queriesKey = GlobalKey();
+  String _selectedTab = "About";
 
   @override
   void initState() {
@@ -34,8 +36,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
-  // Build the club info in an oval container aligned to the left.
-   Widget _buildClubInfo(Map<String, dynamic> club) {
+  // Build the club info widget with updated keys (club name and logo).
+  Widget _buildClubInfo(Map<String, dynamic> club) {
     return Padding(
       padding: const EdgeInsets.all(6),
       child: Align(
@@ -46,7 +48,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
             color: const Color(0xff6E7D87),
             borderRadius: BorderRadius.circular(40),
             boxShadow: const [
-              BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+              BoxShadow(
+                  color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
             ],
           ),
           child: Row(
@@ -55,7 +58,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               // Club Logo with transparent background.
               ClipOval(
                 child: Container(
-                  color: Colors.transparent, // Set the background of the image container to transparent.
+                  color: Colors.transparent,
                   child: (club['clubLogo'] != null &&
                           club['clubLogo'].toString().isNotEmpty &&
                           club['clubLogo'].toString().startsWith('http'))
@@ -84,7 +87,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
               const SizedBox(width: 8),
               Text(
                 club['clubName'] ?? 'Unknown Club',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -93,9 +97,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  // Build the event poster (resized to a fixed height while preserving aspect ratio).
+  // Build the event poster.
   Widget _buildEventPoster(String? posterUrl) {
-    if (posterUrl != null && posterUrl.isNotEmpty && posterUrl.startsWith('http')) {
+    if (posterUrl != null &&
+        posterUrl.isNotEmpty &&
+        posterUrl.startsWith('http')) {
       return Container(
         height: 150,
         width: double.infinity,
@@ -136,11 +142,22 @@ class _EventDetailPageState extends State<EventDetailPage> {
           children: [
             Expanded(
               child: InkWell(
-                onTap: () => _scrollToSection(_aboutKey),
-                child: const Center(
+                onTap: () {
+                  setState(() {
+                    _selectedTab = "About";
+                  });
+                  _scrollToSection(_aboutKey);
+                },
+                child: Center(
                   child: Text(
                     "About",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: _selectedTab == "About"
+                          ? Colors.red
+                          : Colors.black, // Highlight selected tab
+                    ),
                   ),
                 ),
               ),
@@ -152,11 +169,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             Expanded(
               child: InkWell(
-                onTap: () => _scrollToSection(_updatesKey),
-                child: const Center(
+                onTap: () {
+                  setState(() {
+                    _selectedTab = "Updates";
+                  });
+                  _scrollToSection(_updatesKey);
+                },
+                child: Center(
                   child: Text(
                     "Updates",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color:
+                          _selectedTab == "Updates" ? Colors.red : Colors.black,
+                    ),
                   ),
                 ),
               ),
@@ -168,11 +195,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ),
             Expanded(
               child: InkWell(
-                onTap: () => _scrollToSection(_queriesKey),
-                child: const Center(
+                onTap: () {
+                  setState(() {
+                    _selectedTab = "Queries";
+                  });
+                  _scrollToSection(_queriesKey);
+                },
+                child: Center(
                   child: Text(
                     "Queries",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color:
+                          _selectedTab == "Queries" ? Colors.red : Colors.black,
+                    ),
                   ),
                 ),
               ),
@@ -183,7 +220,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  // Build the About section with event details and a Register button.
+  // Build the About section showing event details.
   Widget _buildAboutSection(Map<String, dynamic> event) {
     return Card(
       key: _aboutKey,
@@ -196,55 +233,57 @@ class _EventDetailPageState extends State<EventDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              children: const [
-                Icon(Icons.calendar_today, size: 20),
-                SizedBox(width: 8),
-                Text("Date:", style: TextStyle(fontWeight: FontWeight.bold)),
+              children: [
+                const Icon(Icons.calendar_today, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                    "Date: ${event['eventDate'] != null ? DateFormat('yyyy-MM-dd').format(DateTime.parse(event['eventDate'])) : 'N/A'}"),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(event['eventDate'] ?? ''),
             const SizedBox(height: 8),
             Row(
-              children: const [
-                Icon(Icons.access_time, size: 20),
-                SizedBox(width: 8),
-                Text("Time:", style: TextStyle(fontWeight: FontWeight.bold)),
+              children: [
+                const Icon(Icons.access_time, size: 20),
+                const SizedBox(width: 8),
+                Text("Time: ${event['eventTime'] ?? 'N/A'}"),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(event['eventTime'] ?? ''),
             const SizedBox(height: 8),
             Row(
-              children: const [
-                Icon(Icons.location_on, size: 20),
-                SizedBox(width: 8),
-                Text("Venue:", style: TextStyle(fontWeight: FontWeight.bold)),
+              children: [
+                const Icon(Icons.location_on, size: 20),
+                const SizedBox(width: 8),
+                Text("Venue: ${event['eventVenue'] ?? 'N/A'}"),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(event['eventVenue'] ?? 'N/A'),
             const SizedBox(height: 8),
             Row(
-              children: const [
-                Icon(Icons.event, size: 20),
-                SizedBox(width: 8),
-                Text("Type:", style: TextStyle(fontWeight: FontWeight.bold)),
+              children: [
+                const Icon(Icons.event, size: 20),
+                const SizedBox(width: 8),
+                Text("Type: ${event['eventType'] ?? 'N/A'}"),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(event['eventType'] ?? ''),
             const SizedBox(height: 8),
-            if (event['prizes'] != null && event['prizes'].toString().isNotEmpty)
+            if (event['prizes'] != null &&
+                event['prizes'].toString().isNotEmpty)
               Row(
-                children: const [
-                  Icon(Icons.money, size: 20),
-                  SizedBox(width: 8),
-                  Text("Prize:", style: TextStyle(fontWeight: FontWeight.bold)),
+                children: [
+                  const Icon(Icons.money, size: 20),
+                  const SizedBox(width: 8),
+                  Text("Prize: ₹${event['prizes']}"),
                 ],
               ),
-            if (event['prizes'] != null && event['prizes'].toString().isNotEmpty)
-              Text("₹${event['prizes']}"),
+            const SizedBox(height: 16),
+            Text(
+              event['eventDescription'] ?? "No description available.",
+              style: const TextStyle(fontSize: 16),
+              textAlign: TextAlign.justify,
+            ),
+            const SizedBox(height: 16),
+            if (event['chiefGuest'] != null &&
+                event['chiefGuest'].toString().isNotEmpty)
+              Text("Chief Guest: ${event['chiefGuest']}"),
             const SizedBox(height: 16),
             const Divider(),
             const SizedBox(height: 8),
@@ -263,8 +302,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  // Build the Updates section (prototype) as a card.
-  Widget _buildUpdatesSection() {
+  // Build the Updates section.
+  Widget _buildUpdatesSection(Map<String, dynamic> event) {
+    final List<dynamic> updates = event['updates'] ?? [];
     return Card(
       key: _updatesKey,
       color: Colors.grey.shade300,
@@ -274,21 +314,34 @@ class _EventDetailPageState extends State<EventDetailPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text(
+          children: [
+            const Text(
               "Updates",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
-            Text("No updates available at the moment."),
+            const SizedBox(height: 8),
+            updates.isNotEmpty
+                ? Column(
+                    children: updates.map((update) {
+                      return ListTile(
+                        title: Text(update['updateText'] ?? ''),
+                        subtitle: update['updatedAt'] != null
+                            ? Text(DateFormat('yyyy-MM-dd – kk:mm')
+                                .format(DateTime.parse(update['updatedAt'])))
+                            : null,
+                      );
+                    }).toList(),
+                  )
+                : const Text("No updates available at the moment."),
           ],
         ),
       ),
     );
   }
 
-  // Build the Queries section (prototype) as a card.
-  Widget _buildQueriesSection() {
+  // Build the Queries section.
+  Widget _buildQueriesSection(Map<String, dynamic> event) {
+    final List<dynamic> queries = event['queries'] ?? [];
     return Card(
       key: _queriesKey,
       color: Colors.grey.shade300,
@@ -304,23 +357,19 @@ class _EventDetailPageState extends State<EventDetailPage> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text("User Query 1: What is the schedule?"),
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text("User Query 2: Is registration free?"),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              decoration: InputDecoration(
-                labelText: "Ask your question",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
+            queries.isNotEmpty
+                ? Column(
+                    children: queries.map((query) {
+                      return ListTile(
+                        title: Text(query['queryText'] ?? ''),
+                        subtitle: query['timestamp'] != null
+                            ? Text(DateFormat('yyyy-MM-dd – kk:mm')
+                                .format(DateTime.parse(query['timestamp'])))
+                            : null,
+                      );
+                    }).toList(),
+                  )
+                : const Text("No queries available at the moment."),
           ],
         ),
       ),
@@ -355,7 +404,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 16), // Gap between AppBar and club info
+                    const SizedBox(
+                        height: 16), // Gap between AppBar and club info
                     // Club Info (aligned to left)
                     _buildClubInfo(club),
                     const SizedBox(height: 16),
@@ -373,11 +423,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     child: Column(
                       children: [
                         const SizedBox(height: 16),
-                        _buildAboutSection(event),
-                        const SizedBox(height: 16),
-                        _buildUpdatesSection(),
-                        const SizedBox(height: 16),
-                        _buildQueriesSection(),
+                          _buildAboutSection(event),
+                          const SizedBox(height: 16),
+                          _buildUpdatesSection(event),
+                          const SizedBox(height: 16),
+                          _buildQueriesSection(event),
                         const SizedBox(height: 16),
                       ],
                     ),
