@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gtcconnect/bottom_nav_bar.dart';
-import 'package:gtcconnect/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);

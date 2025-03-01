@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class ApiService {
@@ -139,6 +140,43 @@ class ApiService {
       return json.decode(response.body);
     } else {
       throw Exception("Failed to load division core details");
+    }
+  }
+
+  static Future<String> createEvent(Map<String, dynamic> eventData, {File? posterImage}) async {
+    if (posterImage != null) {
+      // Use multipart request when an image is selected.
+      var request = http.MultipartRequest("POST", Uri.parse('$baseUrl/events/create'));
+      
+      // Add text fields
+      eventData.forEach((key, value) {
+        request.fields[key] = value.toString();
+      });
+      
+      // Add the image file.
+      request.files.add(
+        await http.MultipartFile.fromPath('posterImage', posterImage.path)
+      );
+      
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+      if (response.statusCode == 201) {
+        return "Event created successfully";
+      } else {
+        throw Exception("Failed to create event: ${response.body}");
+      }
+    } else {
+      // No image file, send regular JSON.
+      final response = await http.post(
+        Uri.parse('$baseUrl/events/create'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(eventData),
+      );
+      if (response.statusCode == 201) {
+        return "Event created successfully";
+      } else {
+        throw Exception("Failed to create event: ${response.body}");
+      }
     }
   }
 }
